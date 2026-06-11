@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>制作タイマー</title>
+    <title>制作タイマー - 制作タイマー</title>
     <style>
         :root {
             --bg-main: #f8fafc;
@@ -66,7 +66,7 @@
             gap: 8px;
         }
 
-        input[type="text"] {
+        input[type="text"], input[type="date"], input[type="number"] {
             flex: 1;
             padding: 8px 12px;
             border: 1px solid var(--border-color);
@@ -75,7 +75,7 @@
             outline: none;
         }
 
-        input[type="text"]:focus {
+        input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus {
             border-color: var(--accent-color);
         }
 
@@ -341,7 +341,7 @@
             line-height: 1.4;
         }
 
-        /* 編集用フォームフォーム */
+        /* 編集用フォーム */
         .edit-form {
             display: flex;
             align-items: center;
@@ -352,13 +352,31 @@
             font-weight: 700;
             padding: 4px 8px;
         }
+
+        /* 手動入力エリア */
+        .manual-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .manual-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .manual-form-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
     </style>
 </head>
 <body>
 
     <div id="sidebar">
         <div class="sidebar-header">
-            <h1>制作タイマー</h1>
+            <h1>制作カテゴリー</h1>
             <div class="category-form">
                 <div class="form-row">
                     <input type="text" id="new-cat-name" placeholder="新しいカテゴリ名">
@@ -369,7 +387,7 @@
         </div>
         
         <div class="category-list-container" id="category-list">
-            </div>
+        </div>
         
         <div class="sidebar-footer">
             <button class="btn btn-secondary" onclick="exportJSON()">保存</button>
@@ -379,7 +397,7 @@
     </div>
 
     <div id="main">
-        </div>
+    </div>
 
     <script>
         const STORAGE_KEY = 'production_timer_data_v1';
@@ -393,6 +411,7 @@
 
         let currentCategoryId = null; // 現在選択中のカテゴリID
         let isEditing = false;        // 編集モードフラグ
+        let showManualInput = false;  // 手動入力フォームの開閉フラグ
 
         // 初期ロード
         window.onload = function() {
@@ -416,23 +435,20 @@
                     console.error("データ解析エラー", e);
                 }
             } else {
-                // 初回のみ：要件定義書に記載されたサンプルデータを初期配置
+                // 初回のみ：「お手本」カテゴリーとサンプルデータを初期配置
                 initSampleData();
             }
         }
 
-        // サンプルデータの初期化
+        // サンプルデータの初期化（「お手本」カテゴリのみ）
         function initSampleData() {
             state.categories = [
-                { id: 'cat-unity', name: 'Unity', color: '#3498db' },
-                { id: 'cat-blender', name: 'Blender', color: '#e67e22' },
-                { id: 'cat-sotsuken', name: '卒研', color: '#2ecc71' }
+                { id: 'cat-otehon', name: 'お手本', color: '#8b5cf6' }
             ];
-            // 127時間35分 = 459300秒, 54時間20分 = 195600秒, 31時間10分 = 112200秒
+            // 1時間(3600秒) と 2時間(7200秒) が同じ日付で合算されるお手本データ
             state.logs = [
-                { id: 'l1', categoryId: 'cat-unity', date: '2026/06/10', duration: 459300, note: 'UI調整、シェーダー修正' },
-                { id: 'l2', categoryId: 'cat-blender', date: '2026/06/10', duration: 195600, note: 'モデリング作成' },
-                { id: 'l3', categoryId: 'cat-sotsuken', date: '2026/06/10', duration: 112200, note: '論文構成の検討' }
+                { id: 'l1', categoryId: 'cat-otehon', date: '2026/06/11', duration: 3600, note: 'UI調整' },
+                { id: 'l2', categoryId: 'cat-otehon', date: '2026/06/11', duration: 7200, note: 'シェーダー修正' }
             ];
             saveData();
         }
@@ -478,7 +494,6 @@
                 }
                 groups[log.date].duration += log.duration;
                 if (log.note && log.note.trim() !== "") {
-                    // 重複しないようにメモを収集
                     if (!groups[log.date].notes.includes(log.note.trim())) {
                         groups[log.date].notes.push(log.note.trim());
                     }
@@ -626,20 +641,41 @@
                 </div>
 
                 <div class="section-card">
+                    <button class="btn btn-secondary" onclick="toggleManualInput()">
+                        ${showManualInput ? '✕ 手動入力を閉じる' : '＋ 手動で記録を追加'}
+                    </button>
+                    <div id="manual-input-area" style="display: ${showManualInput ? 'block' : 'none'}; margin-top: 16px; padding: 16px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <div class="manual-form-grid">
+                            <div class="manual-form-group">
+                                <label for="manual-date">日付</label>
+                                <input type="date" id="manual-date" value="${getTodayString().replace(/\//g, '-')}">
+                            </div>
+                            <div class="manual-form-group">
+                                <label for="manual-minutes">作業時間（分数）</label>
+                                <input type="number" id="manual-minutes" placeholder="例: 15" min="1">
+                            </div>
+                        </div>
+                        <div class="manual-form-group" style="margin-bottom: 16px;">
+                            <label for="manual-note">作業メモ</label>
+                            <textarea id="manual-note" placeholder="例: 先に作業していた15分、など" style="height: 60px;"></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="addManualLog('${cat.id}')">記録を保存する</button>
+                    </div>
+                </div>
+
+                <div class="section-card">
                     <h3 class="section-title">作業履歴</h3>
                     ${historyHtml}
                 </div>
             `;
         }
 
-        // 1秒ごとの定期実行（画面全体の再構築をせず、数字のカウントアップのみを行う）
+        // 1秒ごとの定期実行
         function tick() {
             if (!state.activeTimer) return;
             
-            // サイドバーの累積時間を更新するためにサイドバーのみ再描画
             renderSidebar();
 
-            // 表示中のカテゴリが計測中であれば、メイン画面のタイマー表示と合計値をリアルタイム更新
             if (currentCategoryId === state.activeTimer.categoryId) {
                 const elapsedSec = Math.floor((Date.now() - state.activeTimer.startTime) / 1000);
                 const timerDisplay = document.getElementById('main-timer-display');
@@ -677,7 +713,7 @@
             state.categories.push({ id: newId, name, color });
             nameInput.value = '';
             
-            currentCategoryId = newId; // 追加したカテゴリを自動選択
+            currentCategoryId = newId; 
             saveData();
             render();
         }
@@ -685,7 +721,6 @@
         // カテゴリ削除
         function deleteCategory(id) {
             if (confirm('本当に削除しますか？\n(削除するとこのカテゴリのこれまでの作業履歴もすべて削除されます)')) {
-                // もし削除対象が計測中ならタイマー停止
                 if (state.activeTimer && state.activeTimer.categoryId === id) {
                     state.activeTimer = null;
                 }
@@ -728,26 +763,22 @@
         function toggleTimer(id) {
             const now = Date.now();
 
-            // 1. 動いているタイマーと同じカテゴリが押された場合 -> 停止処理
             if (state.activeTimer && state.activeTimer.categoryId === id) {
                 stopActiveTimer();
                 render();
                 return;
             }
 
-            // 2. 別のカテゴリが既に動いている場合 -> 自動停止させてから新しいのを開始
             if (state.activeTimer && state.activeTimer.categoryId !== id) {
                 stopActiveTimer();
             }
 
-            // 新規タイマー開始
             state.activeTimer = {
                 categoryId: id,
                 startTime: now,
                 temporaryNote: ''
             };
             
-            // もしメイン画面にメモ欄があれば、その値を初期値としてバッファに格納
             const memoEl = document.getElementById('today-memo');
             if (memoEl && currentCategoryId === id) {
                 state.activeTimer.temporaryNote = memoEl.value;
@@ -757,13 +788,12 @@
             render();
         }
 
-        // 稼働中のタイマーを停止してログにコミットする内部ロジック
+        // 稼働中のタイマーを停止してログにコミット
         function stopActiveTimer() {
             if (!state.activeTimer) return;
 
             const elapsedSec = Math.floor((Date.now() - state.activeTimer.startTime) / 1000);
             
-            // 1秒以上作業していればログに書き込む
             if (elapsedSec > 0) {
                 state.logs.push({
                     id: 'log-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
@@ -774,7 +804,6 @@
                 });
             }
 
-            // 停止したカテゴリが現在表示中ならメモ欄を綺麗にする
             if (currentCategoryId === state.activeTimer.categoryId) {
                 const memoEl = document.getElementById('today-memo');
                 if (memoEl) memoEl.value = '';
@@ -788,8 +817,39 @@
         function syncMemo(value) {
             if (state.activeTimer && state.activeTimer.categoryId === currentCategoryId) {
                 state.activeTimer.temporaryNote = value;
-                saveData(); // ブラウザを閉じても入力中のメモが消えないように自動保存
+                saveData(); 
             }
+        }
+
+        /* 手動記録追加のフォーム表示制御 */
+        function toggleManualInput() {
+            showManualInput = !showManualInput;
+            renderMain();
+        }
+
+        /* 手動入力した作業記録をログに統合 */
+        function addManualLog(categoryId) {
+            const dateInput = document.getElementById('manual-date').value;
+            const minutes = parseInt(document.getElementById('manual-minutes').value);
+            const note = document.getElementById('manual-note').value;
+
+            if (!dateInput || !minutes || minutes <= 0) {
+                alert('日付と時間を正しく入力してください。');
+                return;
+            }
+
+            // 既存のデータ構造と完全に同じ形で logs 配列に追加
+            state.logs.push({
+                id: 'log-manual-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                categoryId: categoryId,
+                date: dateInput.replace(/-/g, '/'), // 'YYYY-MM-DD' を既存の 'YYYY/MM/DD' 形式に変換
+                duration: minutes * 60,            // 分数を秒数に変換して統合
+                note: note ? note.trim() : ''
+            });
+
+            saveData();
+            showManualInput = false; // 保存したらフォームを閉じる
+            render(); // 画面全体を再描画して合算や累積値を反映
         }
 
         /* バックアップ機能 (JSONインポート / エクスポート) */
@@ -797,7 +857,7 @@
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `production_timer_backup_${getTodayString().replace(/\//g, '')}.json`);
+            downloadAnchor.setAttribute("download", `prolog_backup_${getTodayString().replace(/\//g, '')}.json`);
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
@@ -818,7 +878,6 @@
                     if (importedState.categories && importedState.logs) {
                         if (confirm('データをインポートしますか？現行のデータは上書きされます。')) {
                             state = importedState;
-                            // 計測状態がおかしくなるのを防ぐため、インポート時は一度タイマーを強制リセット
                             state.activeTimer = null; 
                             saveData();
                             currentCategoryId = state.categories.length > 0 ? state.categories[0].id : null;
@@ -827,14 +886,14 @@
                             alert('バックアップから正常に復元しました。');
                         }
                     } else {
-                        alert('不正なJSON形式です。制作タイマー専用のバックアップを指定してください。');
+                        alert('不正なJSON形式です。専用のバックアップを指定してください。');
                     }
                 } catch (err) {
                     alert('ファイルの読み込みに失敗しました。');
                 }
             };
             reader.readAsText(file);
-            event.target.value = ''; // 同じファイルを連続で選べるようにリセット
+            event.target.value = ''; 
         }
 
         // HTMLエスケープ（XSS対策）
