@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>制作タイマー</title>
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-sidebar: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --success-color: #10b981;
+            --success-hover: #059669;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 左サイドバー */
+        #sidebar {
+            width: 340px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .category-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+        }
+
+        input[type="color"] {
+            width: 40px;
+            height: 38px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary { background-color: var(--accent-color); color: white; }
+        .btn-primary:hover { background-color: var(--accent-hover); }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-success:hover { background-color: var(--success-hover); }
+        .btn-secondary { background-color: #e2e8f0; color: var(--text-main); }
+        .btn-secondary:hover { background-color: #cbd5e1; }
+
+        .category-list-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .category-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .category-item.active {
+            background-color: #eff6ff;
+            border-left-color: var(--accent-color);
+        }
+
+        .category-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .category-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.95rem;
+        }
+
+        .category-time {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-left: auto;
+            padding-right: 8px;
+            white-space: nowrap;
+        }
+
+        .quick-timer-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        .quick-timer-btn:hover { background-color: #e2e8f0; }
+
+        .sidebar-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+        }
+        .sidebar-footer .btn {
+            flex: 1;
+            font-size: 0.8rem;
+            padding: 6px;
+        }
+
+        /* 右メイン領域 */
+        #main {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .placeholder-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            gap: 10px;
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        .detail-title-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .detail-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .detail-total {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* タイマーカード */
+        .timer-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+
+        .timer-status {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .status-running { color: var(--success-color); animation: pulse 2s infinite; }
+        .status-stopped { color: var(--text-muted); }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .timer-display {
+            font-size: 3.5rem;
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        .timer-controls {
+            width: 100%;
+            max-width: 240px;
+        }
+        .timer-controls .btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.05rem;
+        }
+
+        /* メモ & 履歴セクション */
+        .section-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            resize: none;
+            font-family: inherit;
+            outline: none;
+        }
+        textarea:focus {
+            border-color: var(--accent-color);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-item {
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 12px;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .history-meta {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .history-date { color: var(--text-main); }
+        .history-duration { color: var(--accent-color); }
+        
+        .history-notes {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* 編集用フォームフォーム */
+        .edit-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .edit-form input[type="text"] {
+            font-size: 1.4rem;
+            font-weight: 700;
+            padding: 4px 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <h1>制作タイマー</h1>
+            <div class="category-form">
+                <div class="form-row">
+                    <input type="text" id="new-cat-name" placeholder="新しいカテゴリ名">
+                    <input type="color" id="new-cat-color" value="#3b82f6">
+                </div>
+                <button class="btn btn-primary" onclick="addCategory()">カテゴリ追加</button>
+            </div>
+        </div>
+        
+        <div class="category-list-container" id="category-list">
+            </div>
+        
+        <div class="sidebar-footer">
+            <button class="btn btn-secondary" onclick="exportJSON()">保存</button>
+            <button class="btn btn-secondary" onclick="triggerImport()">読み込み</button>
+            <input type="file" id="import-file" style="display:none" onchange="importJSON(event)">
+        </div>
+    </div>
+
+    <div id="main">
+        </div>
+
+    <script>
+        const STORAGE_KEY = 'production_timer_data_v1';
+
+        // アプリケーションの状態
+        let state = {
+            categories: [],
+            logs: [],
+            activeTimer: null // { categoryId, startTime, temporaryNote }
+        };
+
+        let currentCategoryId = null; // 現在選択中のカテゴリID
+        let isEditing = false;        // 編集モードフラグ
+
+        // 初期ロード
+        window.onload = function() {
+            loadData();
+            if (state.categories.length > 0) {
+                currentCategoryId = state.categories[0].id;
+            }
+            render();
+            
+            // 1秒ごとの定期更新（タイマーのリアルタイム描画用）
+            setInterval(tick, 1000);
+        };
+
+        // データの読み込み
+        function loadData() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                try {
+                    state = JSON.parse(data);
+                } catch (e) {
+                    console.error("データ解析エラー", e);
+                }
+            } else {
+                // 初回のみ：要件定義書に記載されたサンプルデータを初期配置
+                initSampleData();
+            }
+        }
+
+        // サンプルデータの初期化
+        function initSampleData() {
+            state.categories = [
+                { id: 'cat-unity', name: 'Unity', color: '#3498db' },
+                { id: 'cat-blender', name: 'Blender', color: '#e67e22' },
+                { id: 'cat-sotsuken', name: '卒研', color: '#2ecc71' }
+            ];
+            // 127時間35分 = 459300秒, 54時間20分 = 195600秒, 31時間10分 = 112200秒
+            state.logs = [
+                { id: 'l1', categoryId: 'cat-unity', date: '2026/06/10', duration: 459300, note: 'UI調整、シェーダー修正' },
+                { id: 'l2', categoryId: 'cat-blender', date: '2026/06/10', duration: 195600, note: 'モデリング作成' },
+                { id: 'l3', categoryId: 'cat-sotsuken', date: '2026/06/10', duration: 112200, note: '論文構成の検討' }
+            ];
+            saveData();
+        }
+
+        // LocalStorageに保存
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        // 秒数を「X時間Y分」の形式に変換
+        function formatDuration(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            return `${hours}時間${minutes}分`;
+        }
+
+        // 今日を表す文字列を取得 (YYYY/MM/DD)
+        function getTodayString() {
+            const d = new Date();
+            return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        // 指定カテゴリの累計時間を計算（計測中の時間もリアルタイム加算）
+        function getCategoryTotalDuration(categoryId) {
+            let total = state.logs
+                .filter(log => log.categoryId === categoryId)
+                .reduce((sum, log) => sum + log.duration, 0);
+
+            if (state.activeTimer && state.activeTimer.categoryId === categoryId) {
+                total += Math.floor((Date.now() - state.activeTimer.startTime) / 1000);
+            }
+            return total;
+        }
+
+        // 同日合算ルールを適用した履歴リストの取得
+        function getAggregatedLogs(categoryId) {
+            const filtered = state.logs.filter(log => log.categoryId === categoryId);
+            const groups = {};
+
+            filtered.forEach(log => {
+                if (!groups[log.date]) {
+                    groups[log.date] = { duration: 0, notes: [] };
+                }
+                groups[log.date].duration += log.duration;
+                if (log.note && log.note.trim() !== "") {
+                    // 重複しないようにメモを収集
+                    if (!groups[log.date].notes.includes(log.note.trim())) {
+                        groups[log.date].notes.push(log.note.trim());
+                    }
+                }
+            });
+
+            // 日付の降順（新しい順）でソートして返却
+            return Object.keys(groups).sort((a, b) => b.localeCompare(a)).map(date => ({
+                date,
+                duration: groups[date].duration,
+                notes: groups[date].notes.join('、')
+            }));
+        }
+
+        // 画面全体の描画
+        function render() {
+            renderSidebar();
+            renderMain();
+        }
+
+        // 左サイドバーの描画
+        function renderSidebar() {
+            const container = document.getElementById('category-list');
+            container.innerHTML = '';
+
+            state.categories.forEach(cat => {
+                const isRunning = state.activeTimer && state.activeTimer.categoryId === cat.id;
+                const totalSec = getCategoryTotalDuration(cat.id);
+                
+                const item = document.createElement('div');
+                item.className = `category-item ${cat.id === currentCategoryId ? 'active' : ''}`;
+                item.onclick = () => selectCategory(cat.id);
+
+                item.innerHTML = `
+                    <div class="category-info">
+                        <span class="color-dot" style="background-color: ${cat.color}"></span>
+                        <span class="category-name" title="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}</span>
+                        <span class="category-time">${formatDuration(totalSec)}</span>
+                    </div>
+                    <button class="quick-timer-btn" onclick="event.stopPropagation(); toggleTimer('${cat.id}')" title="${isRunning ? '停止' : '開始'}">
+                        ${isRunning ? '■' : '▶'}
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // 右メイン領域の描画
+        function renderMain() {
+            const container = document.getElementById('main');
+            if (!currentCategoryId) {
+                container.innerHTML = `
+                    <div class="placeholder-message">
+                        <h2>カテゴリが選択されていません</h2>
+                        <p>左のサイドバーから作業するカテゴリを選択するか、新しく作成してください。</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const cat = state.categories.find(c => c.id === currentCategoryId);
+            if (!cat) {
+                currentCategoryId = null;
+                render();
+                return;
+            }
+
+            const isRunning = state.activeTimer && state.activeTimer.categoryId === cat.id;
+            const totalSec = getCategoryTotalDuration(cat.id);
+            
+            let elapsedSec = 0;
+            if (isRunning) {
+                elapsedSec = Math.floor((Date.now() - state.activeTimer.startTime) / 1000);
+            }
+
+            // ヘッダー部分（通常モード or 編集モード）
+            let headerHtml = '';
+            if (isEditing) {
+                headerHtml = `
+                    <div class="edit-form">
+                        <input type="text" id="edit-name" value="${escapeHtml(cat.name)}">
+                        <input type="color" id="edit-color" value="${cat.color}">
+                        <button class="btn btn-success" onclick="saveCategoryEdit('${cat.id}')">保存</button>
+                        <button class="btn btn-secondary" onclick="setEditMode(false)">キャンセル</button>
+                    </div>
+                `;
+            } else {
+                headerHtml = `
+                    <div class="detail-title-area">
+                        <span class="color-dot" style="width: 18px; height: 18px; background-color: ${cat.color}"></span>
+                        <div>
+                            <h2 class="detail-title">${escapeHtml(cat.name)}</h2>
+                            <div class="detail-total">累計時間: ${formatDuration(totalSec)}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-secondary" onclick="setEditMode(true)">編集</button>
+                        <button class="btn btn-danger" onclick="deleteCategory('${cat.id}')">削除</button>
+                    </div>
+                `;
+            }
+
+            // 作業履歴の集計
+            const historyData = getAggregatedLogs(cat.id);
+            let historyHtml = '';
+            if (historyData.length === 0) {
+                historyHtml = `<p style="color:var(--text-muted); font-size:0.9rem;">作業履歴はまだありません。</p>`;
+            } else {
+                historyHtml = `<div class="history-list">`;
+                historyData.forEach(h => {
+                    historyHtml += `
+                        <div class="history-item">
+                            <div class="history-meta">
+                                <span class="history-date">${h.date}</span>
+                                <span class="history-duration">${formatDuration(h.duration)}</span>
+                            </div>
+                            <div class="history-notes">${escapeHtml(h.notes) || '（メモなし）'}</div>
+                        </div>
+                    `;
+                });
+                historyHtml += `</div>`;
+            }
+
+            // メモの復元用
+            const currentMemoValue = isRunning ? (state.activeTimer.temporaryNote || '') : '';
+
+            container.innerHTML = `
+                <div class="detail-header">${headerHtml}</div>
+                
+                <div class="timer-card">
+                    <div class="timer-status ${isRunning ? 'status-running' : 'status-stopped'}">
+                        ${isRunning ? '● 計測中' : '■ 停止中'}
+                    </div>
+                    <div class="timer-display" id="main-timer-display">${formatDuration(elapsedSec)}</div>
+                    <div class="timer-controls">
+                        <button class="btn ${isRunning ? 'btn-danger' : 'btn-primary'}" onclick="toggleTimer('${cat.id}')">
+                            ${isRunning ? 'タイマー停止' : 'タイマー開始'}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <h3 class="section-title">本日のメモ</h3>
+                    <textarea id="today-memo" placeholder="ここに本日の作業内容を記録します（例: UI調整、シェーダー修正）" oninput="syncMemo(this.value)">${escapeHtml(currentMemoValue)}</textarea>
+                </div>
+
+                <div class="section-card">
+                    <h3 class="section-title">作業履歴</h3>
+                    ${historyHtml}
+                </div>
+            `;
+        }
+
+        // 1秒ごとの定期実行（画面全体の再構築をせず、数字のカウントアップのみを行う）
+        function tick() {
+            if (!state.activeTimer) return;
+            
+            // サイドバーの累積時間を更新するためにサイドバーのみ再描画
+            renderSidebar();
+
+            // 表示中のカテゴリが計測中であれば、メイン画面のタイマー表示と合計値をリアルタイム更新
+            if (currentCategoryId === state.activeTimer.categoryId) {
+                const elapsedSec = Math.floor((Date.now() - state.activeTimer.startTime) / 1000);
+                const timerDisplay = document.getElementById('main-timer-display');
+                if (timerDisplay) {
+                    timerDisplay.textContent = formatDuration(elapsedSec);
+                }
+
+                const cat = state.categories.find(c => c.id === currentCategoryId);
+                const totalSec = getCategoryTotalDuration(cat.id);
+                const totalDisplay = document.querySelector('.detail-total');
+                if (totalDisplay) {
+                    totalDisplay.textContent = `累計時間: ${formatDuration(totalSec)}`;
+                }
+            }
+        }
+
+        // カテゴリ切り替え
+        function selectCategory(id) {
+            if (currentCategoryId === id) return;
+            currentCategoryId = id;
+            isEditing = false;
+            render();
+        }
+
+        // カテゴリ追加
+        function addCategory() {
+            const nameInput = document.getElementById('new-cat-name');
+            const colorInput = document.getElementById('new-cat-color');
+            const name = nameInput.value.trim();
+            const color = colorInput.value;
+
+            if (!name) return;
+
+            const newId = 'cat-' + Date.now();
+            state.categories.push({ id: newId, name, color });
+            nameInput.value = '';
+            
+            currentCategoryId = newId; // 追加したカテゴリを自動選択
+            saveData();
+            render();
+        }
+
+        // カテゴリ削除
+        function deleteCategory(id) {
+            if (confirm('本当に削除しますか？\n(削除するとこのカテゴリのこれまでの作業履歴もすべて削除されます)')) {
+                // もし削除対象が計測中ならタイマー停止
+                if (state.activeTimer && state.activeTimer.categoryId === id) {
+                    state.activeTimer = null;
+                }
+                state.categories = state.categories.filter(c => c.id !== id);
+                state.logs = state.logs.filter(l => l.categoryId !== id);
+                
+                if (currentCategoryId === id) {
+                    currentCategoryId = state.categories.length > 0 ? state.categories[0].id : null;
+                }
+                isEditing = false;
+                saveData();
+                render();
+            }
+        }
+
+        // 編集モード切り替え
+        function setEditMode(mode) {
+            isEditing = mode;
+            renderMain();
+        }
+
+        // カテゴリ編集の保存
+        function saveCategoryEdit(id) {
+            const newName = document.getElementById('edit-name').value.trim();
+            const newColor = document.getElementById('edit-color').value;
+
+            if (!newName) return;
+
+            const cat = state.categories.find(c => c.id === id);
+            if (cat) {
+                cat.name = newName;
+                cat.color = newColor;
+                saveData();
+            }
+            isEditing = false;
+            render();
+        }
+
+        // タイマーの開始・停止制御
+        function toggleTimer(id) {
+            const now = Date.now();
+
+            // 1. 動いているタイマーと同じカテゴリが押された場合 -> 停止処理
+            if (state.activeTimer && state.activeTimer.categoryId === id) {
+                stopActiveTimer();
+                render();
+                return;
+            }
+
+            // 2. 別のカテゴリが既に動いている場合 -> 自動停止させてから新しいのを開始
+            if (state.activeTimer && state.activeTimer.categoryId !== id) {
+                stopActiveTimer();
+            }
+
+            // 新規タイマー開始
+            state.activeTimer = {
+                categoryId: id,
+                startTime: now,
+                temporaryNote: ''
+            };
+            
+            // もしメイン画面にメモ欄があれば、その値を初期値としてバッファに格納
+            const memoEl = document.getElementById('today-memo');
+            if (memoEl && currentCategoryId === id) {
+                state.activeTimer.temporaryNote = memoEl.value;
+            }
+
+            saveData();
+            render();
+        }
+
+        // 稼働中のタイマーを停止してログにコミットする内部ロジック
+        function stopActiveTimer() {
+            if (!state.activeTimer) return;
+
+            const elapsedSec = Math.floor((Date.now() - state.activeTimer.startTime) / 1000);
+            
+            // 1秒以上作業していればログに書き込む
+            if (elapsedSec > 0) {
+                state.logs.push({
+                    id: 'log-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                    categoryId: state.activeTimer.categoryId,
+                    date: getTodayString(),
+                    duration: elapsedSec,
+                    note: state.activeTimer.temporaryNote ? state.activeTimer.temporaryNote.trim() : ''
+                });
+            }
+
+            // 停止したカテゴリが現在表示中ならメモ欄を綺麗にする
+            if (currentCategoryId === state.activeTimer.categoryId) {
+                const memoEl = document.getElementById('today-memo');
+                if (memoEl) memoEl.value = '';
+            }
+
+            state.activeTimer = null;
+            saveData();
+        }
+
+        // メモのリアルタイム同期バッファ
+        function syncMemo(value) {
+            if (state.activeTimer && state.activeTimer.categoryId === currentCategoryId) {
+                state.activeTimer.temporaryNote = value;
+                saveData(); // ブラウザを閉じても入力中のメモが消えないように自動保存
+            }
+        }
+
+        /* バックアップ機能 (JSONインポート / エクスポート) */
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `production_timer_backup_${getTodayString().replace(/\//g, '')}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function triggerImport() {
+            document.getElementById('import-file').click();
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedState = JSON.parse(e.target.result);
+                    if (importedState.categories && importedState.logs) {
+                        if (confirm('データをインポートしますか？現行のデータは上書きされます。')) {
+                            state = importedState;
+                            // 計測状態がおかしくなるのを防ぐため、インポート時は一度タイマーを強制リセット
+                            state.activeTimer = null; 
+                            saveData();
+                            currentCategoryId = state.categories.length > 0 ? state.categories[0].id : null;
+                            isEditing = false;
+                            render();
+                            alert('バックアップから正常に復元しました。');
+                        }
+                    } else {
+                        alert('不正なJSON形式です。制作タイマー専用のバックアップを指定してください。');
+                    }
+                } catch (err) {
+                    alert('ファイルの読み込みに失敗しました。');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // 同じファイルを連続で選べるようにリセット
+        }
+
+        // HTMLエスケープ（XSS対策）
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
