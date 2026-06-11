@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>制作タイマー</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+    <!-- 左サイドバー -->
+    <aside class="sidebar">
+
+        <div class="sidebar-header">
+            <h1>制作タイマー</h1>
+            <button id="addCategoryBtn">
+                ＋カテゴリ追加
+            </button>
+        </div>
+
+        <div id="categoryList" class="category-list">
+
+            <!-- カテゴリ例 -->
+            <div class="category-item active">
+                <div class="category-color"></div>
+
+                <div class="category-info">
+                    <div class="category-name">
+                        Unity
+                    </div>
+
+                    <div class="category-total">
+                        127時間35分
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </aside>
+
+    <!-- メイン -->
+    <main class="main-content">
+
+        <!-- カテゴリタイトル -->
+        <section class="category-header">
+
+            <h2 id="currentCategoryName">
+                Unity
+            </h2>
+
+            <div id="totalTime" class="total-time">
+                合計 127時間35分
+            </div>
+
+        </section>
+
+        <!-- タイマー -->
+        <section class="timer-section">
+
+            <h3>タイマー</h3>
+
+            <div id="timerDisplay" class="timer-display">
+                0時間0分
+            </div>
+
+            <div class="timer-buttons">
+                <button id="startBtn">
+                    開始
+                </button>
+
+                <button id="stopBtn">
+                    停止
+                </button>
+            </div>
+
+        </section>
+
+        <!-- メモ -->
+        <section class="memo-section">
+
+            <h3>本日のメモ</h3>
+
+            <textarea
+                id="memoInput"
+                placeholder="今日の作業内容を入力..."
+            ></textarea>
+
+        </section>
+
+        <!-- 履歴 -->
+        <section class="history-section">
+
+            <h3>履歴</h3>
+
+            <div id="historyList">
+
+                <!-- 履歴サンプル -->
+
+                <div class="history-card">
+
+                    <div class="history-date">
+                        2026/06/11
+                    </div>
+
+                    <div class="history-time">
+                        3時間15分
+                    </div>
+
+                    <div class="history-memo">
+                        UI調整
+                    </div>
+
+                    <div class="history-actions">
+                        <button>
+                            編集
+                        </button>
+
+                        <button>
+                            削除
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- カテゴリ追加モーダル -->
+<dialog id="categoryModal">
+
+    <form method="dialog">
+
+        <h3>カテゴリ追加</h3>
+
+        <label>
+            カテゴリ名
+        </label>
+
+        <input
+            type="text"
+            id="categoryNameInput"
+        >
+
+        <label>
+            カラー
+        </label>
+
+        <input
+            type="color"
+            id="categoryColorInput"
+            value="#4A90E2"
+        >
+
+        <div class="modal-buttons">
+
+            <button value="cancel">
+                キャンセル
+            </button>
+
+            <button
+                id="saveCategoryBtn"
+                value="default"
+            >
+                保存
+            </button>
+
+        </div>
+
+    </form>
+
+</dialog>
+
+<script src="script.js"></script>
+
+</body>
+</html>
