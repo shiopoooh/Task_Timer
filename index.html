@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>制作タイマー - 制作タイマー</title>
+    <title>ー制作タイマー</title>
     <style>
         :root {
             --bg-main: #f8fafc;
@@ -32,6 +32,44 @@
             display: flex;
             height: 100vh;
             overflow: hidden;
+            position: relative;
+        }
+
+        /* スマホ用ハンバーガーボタン（デフォルト非表示） */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1100;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            font-size: 1.4rem;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        .menu-toggle:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* スマホ用背景暗幕（デフォルト非表示） */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(2px);
+            z-index: 950;
         }
 
         /* 左サイドバー */
@@ -42,6 +80,7 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            flex-shrink: 0;
         }
 
         .sidebar-header {
@@ -209,6 +248,7 @@
             height: 100%;
             color: var(--text-muted);
             gap: 10px;
+            text-align: center;
         }
 
         .detail-header {
@@ -370,9 +410,64 @@
             font-weight: 600;
             color: var(--text-muted);
         }
+
+        /* -------------------------------------------
+           📱 レレスポンシブ・スマートフォン対応 (タブレット・スマホ用)
+        ------------------------------------------- */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex; /* スマホのみハンバーガーボタンを表示 */
+            }
+
+            /* サイドバーを画面左外に隠す */
+            #sidebar {
+                position: fixed;
+                left: -340px;
+                top: 0;
+                z-index: 1000;
+                height: 100%;
+                box-shadow: 4px 0 20px rgba(15, 23, 42, 0.15);
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            /* body に特定クラスがついている時だけ開く・暗幕を出す */
+            body.sidebar-open #sidebar {
+                left: 0;
+            }
+            body.sidebar-open .overlay {
+                display: block;
+            }
+
+            /* メイン画面の余白調整（上部にハンバーガーボタンが来るためスペースを空ける） */
+            #main {
+                padding: 80px 16px 24px 16px;
+            }
+
+            .detail-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            .detail-header div[style*="display:flex"] {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .timer-display {
+                font-size: 2.6rem; /* 文字のはみ出し防止 */
+            }
+
+            .manual-form-grid {
+                grid-template-columns: 1fr; /* 手動入力を縦並びに */
+            }
+        }
     </style>
 </head>
 <body>
+
+    <button id="menu-toggle" class="menu-toggle" onclick="toggleSidebar()" title="カテゴリメニューを開く">☰</button>
+    
+    <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
     <div id="sidebar">
         <div class="sidebar-header">
@@ -508,6 +603,11 @@
             }));
         }
 
+        // 🚀 スマホ用サイドバー開閉切り替え
+        function toggleSidebar() {
+            document.body.classList.toggle('sidebar-open');
+        }
+
         // 画面全体の描画
         function render() {
             renderSidebar();
@@ -548,7 +648,7 @@
                 container.innerHTML = `
                     <div class="placeholder-message">
                         <h2>カテゴリが選択されていません</h2>
-                        <p>左のサイドバーから作業するカテゴリを選択するか、新しく作成してください。</p>
+                        <p>左上のメニュー「☰」を開き、カテゴリを選択するか新しく作成してください。</p>
                     </div>
                 `;
                 return;
@@ -697,6 +797,9 @@
             if (currentCategoryId === id) return;
             currentCategoryId = id;
             isEditing = false;
+            
+            // 📱 スマホ環境を考慮し、カテゴリ選択後はメニューを自動で閉じる
+            document.body.classList.remove('sidebar-open');
             render();
         }
 
@@ -715,6 +818,9 @@
             
             currentCategoryId = newId; 
             saveData();
+
+            // 📱 追加完了後はメニューを自動で閉じる
+            document.body.classList.remove('sidebar-open');
             render();
         }
 
